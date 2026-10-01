@@ -63,3 +63,30 @@ def patch_main():
     
     with open(path, "w") as f:
         f.write(c)
+
+
+def patch_constants():
+    path = os.path.join(SRC, "constants.py")
+    with open(path) as f:
+        c = f.read()
+    # Point config and models files to persistent volume
+    if 'CONFIG_FILE = "config.json"' in c:
+        c = c.replace('CONFIG_FILE = "config.json"', 'CONFIG_FILE = "/app/data/config.json"')
+        print("Patched CONFIG_FILE path")
+    if 'MODELS_FILE = "models.json"' in c:
+        c = c.replace('MODELS_FILE = "models.json"', 'MODELS_FILE = "/app/data/models.json"')
+        print("Patched MODELS_FILE path")
+    # Also handle single quotes just in case
+    if "CONFIG_FILE = 'config.json'" in c:
+        c = c.replace("CONFIG_FILE = 'config.json'", "CONFIG_FILE = '/app/data/config.json'")
+        print("Patched CONFIG_FILE path (single quotes)")
+    if "MODELS_FILE = 'models.json'" in c:
+        c = c.replace("MODELS_FILE = 'models.json'", "MODELS_FILE = '/app/data/models.json'")
+        print("Patched MODELS_FILE path (single quotes)")
+    with open(path, "w") as f:
+        f.write(c)
+
+
+if __name__ == "__main__":
+    patch_main()
+    patch_constants()
