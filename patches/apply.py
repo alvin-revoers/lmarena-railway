@@ -3,7 +3,11 @@ import os
 import re
 
 
+
+
 SRC = "/app/src"
+
+
 
 
 def patch_main():
@@ -43,42 +47,19 @@ def patch_main():
     else:
         print("WARNING: get_initial_data not found or already patched")
     
-    # PATCH 2: Bypass reCAPTCHA requirement - allow empty tokens
-    # Replace the HTTPException raise with a warning and empty token
-    old_raise = '''                if not recaptcha_token:
-                    debug_print("\\u274c Cannot proceed, failed to get reCAPTCHA token.")
-                    raise HTTPException(
-                        status_code=503,
-                        detail="Service Unavailable: Failed to acquire reCAPTCHA token. The bridge server may be blocked."
-                    )'''
-    new_raise = '''                if not recaptcha_token:
-                    debug_print("\\u26a0\\ufe0f No reCAPTCHA token, proceeding with empty token.")
-                    recaptcha_token = ""'''
-    if old_raise in c:
-        c = c.replace(old_raise, new_raise)
-        print("Bypassed reCAPTCHA requirement")
+    # PATCH 2: Bypass reCAPTCHA requirement - allow empty tokens (regex version)
+    import re as _re2
+    _pattern = _re2.compile(
+        r'if not recaptcha_token:\s+debug_print\([^)]*Cannot proceed[^)]*\)\s+raise HTTPException\(\s+status_code=503,[^)]+\)',
+        _re2.DOTALL
+    )
+    _replacement = 'if not recaptcha_token:\n                    debug_print("⚠️ No reCAPTCHA token, proceeding with empty token.")\n                    recaptcha_token = ""'
+    _new_c, _n = _pattern.subn(_replacement, c)
+    if _n > 0:
+        c = _new_c
+        print(f"Bypassed reCAPTCHA requirement ({_n} replacements)")
     else:
         print("WARNING: reCAPTCHA raise pattern not found")
     
     with open(path, "w") as f:
         f.write(c)
-
-
-def patch_recaptcha():
-    path = os.path.join(SRC, "recaptcha.py")
-    with open(path) as f:
-        c = f.read()
-    if "if not turnstile_token or not provisional_user_id:" in c:
-        c = c.replace(
-            "    if not turnstile_token or not provisional_user_id:",
-            "    if not provisional_user_id:"
-        )
-        print("Patched recaptcha")
-    with open(path, "w") as f:
-        f.write(c)
-
-
-if __name__ == "__main__":
-    patch_main()
-    patch_recaptcha()
-    print("Done!")
