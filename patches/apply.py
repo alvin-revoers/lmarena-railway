@@ -34,7 +34,7 @@ def patch_main():
             except Exception as e:
                 debug_print(f"\\u274c Error extracting models from catalog: {e}")'''
 
-    new_c, count = re.subn(pattern, new_code, c, flags=re.DOTALL)
+    new_c, count = re.subn(pattern, lambda m: new_code, c, flags=re.DOTALL)
     if count > 0:
         print(f"Patched model extraction ({count} replacement)")
         with open(path, "w") as f:
